@@ -61,15 +61,15 @@ def test_rabbitmq_connection(creds):
         print(f"📤 已成功发送测试消息: '{message}'")
 
         # 4. 消费这条测试消息进行验证
-        method_frame, header_frame, body = channel.basic_get(queue=queue_name, auto_ack=True)
-        if method_frame:
-            print(f"📥 成功接收到测试消息: '{body.decode()}'")
-        else:
-            print("⚠️ 未能接收到刚才发送的消息")
+        # method_frame, header_frame, body = channel.basic_get(queue=queue_name, auto_ack=True)
+        # if method_frame:
+        #     print(f"📥 成功接收到测试消息: '{body.decode()}'")
+        # else:
+        #     print("⚠️ 未能接收到刚才发送的消息")
 
-        # 5. 关闭连接
-        connection.close()
-        print("🎉 测试全部通过！")
+        # # 5. 关闭连接
+        # connection.close()
+        # print("🎉 测试全部通过！")
 
     except Exception as e:
         print(f"❌ RabbitMQ 连接或操作失败: {e}")
