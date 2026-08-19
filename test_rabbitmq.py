@@ -76,7 +76,7 @@ def test_rabbitmq_connection(creds):
 
 if __name__ == "__main__":
     # 替换为你实际在 AWS Secrets Manager 中创建的 Secret 名称或 ARN
-    SECRET_NAME = "prod/rabbitmq/credentials" 
+    SECRET_NAME = "secret-for-rabbitmq-int"
     REGION = "us-east-1"  # 换成你的 AWS 区域
 
     try:
