@@ -49,7 +49,7 @@ docker run -d \
   -p 5672:5672 \
   -p 15672:15672 \
   -e RABBITMQ_DEFAULT_USER=admin \
-  -e RABBITMQ_DEFAULT_PASS=Avnet@916505 \
+  -e RABBITMQ_DEFAULT_PASS=new_password \
   -v rabbitmq_data:/var/lib/rabbitmq \
   rabbitmq:3-management
 
@@ -72,7 +72,7 @@ docker run -d \
   -p 4369:4369 \
   -p 25672:25672 \
   -e RABBITMQ_DEFAULT_USER=admin \
-  -e RABBITMQ_DEFAULT_PASS=Avnet@916505 \
+  -e RABBITMQ_DEFAULT_PASS=new_password \
   -e RABBITMQ_ERLANG_COOKIE='SPGFJGWSJFCVLDCSHDHU' \
   -v rabbitmq_data:/var/lib/rabbitmq \
   rabbitmq:3-management
@@ -92,7 +92,7 @@ docker run -d \
   -p 4369:4369 \
   -p 25672:25672 \
   -e RABBITMQ_DEFAULT_USER=admin \
-  -e RABBITMQ_DEFAULT_PASS=Avnet@916505 \
+  -e RABBITMQ_DEFAULT_PASS=new_password \
   -e RABBITMQ_ERLANG_COOKIE='SPGFJGWSJFCVLDCSHDHU' \
   --add-host rabbitmq-node1:172.20.1.248 \
   -v rabbitmq_data:/var/lib/rabbitmq \
@@ -112,7 +112,7 @@ docker run -d \
   -p 4369:4369 \
   -p 25672:25672 \
   -e RABBITMQ_DEFAULT_USER=admin \
-  -e RABBITMQ_DEFAULT_PASS=Avnet@916505 \
+  -e RABBITMQ_DEFAULT_PASS=new_password \
   -e RABBITMQ_ERLANG_COOKIE='SPGFJGWSJFCVLDCSHDHU' \
   --add-host rabbitmq-node1:172.20.1.248 \
   --add-host rabbitmq-node2:172.20.2.175 \
@@ -192,7 +192,7 @@ docker run -d \
   -p 15672:15672 \
   -v /mnt/rabbitmq-data:/var/lib/rabbitmq \
   -e RABBITMQ_DEFAULT_USER=admin \
-  -e RABBITMQ_DEFAULT_PASS=Avnet@916505 \
+  -e RABBITMQ_DEFAULT_PASS=new_password \
   rabbitmq:3.13-management
 
 
