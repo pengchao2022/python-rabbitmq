@@ -78,11 +78,10 @@ docker run -d \
   rabbitmq:3-management
 
 # node 2
-# 停止并删除现有的名为 rabbitmq 的容器
 docker stop rabbitmq && docker rm rabbitmq
 docker volume rm rabbitmq_data
 
-# 将 node 2 加入集群
+# add node 2 to the cluster 
 docker run -d \
   --name rabbitmq \
   --hostname rabbitmq-node2 \
@@ -102,7 +101,7 @@ docker run -d \
 docker stop rabbitmq && docker rm rabbitmq
 docker volume rm rabbitmq_data
 
-# 将 node 3 加入集群 
+# add node 3 to the cluster
 docker run -d \
   --name rabbitmq \
   --hostname rabbitmq-node3 \
@@ -129,9 +128,10 @@ docker exec -it rabbitmq rabbitmqctl start_app
 
 
 
-# 检查集群的状态 
+# check the rabbitmq cluster info
 docker exec -it rabbitmq rabbitmqctl cluster_status
 
+==============================================================================
 
 # install rabbitmq on EC2 with an EBS volume
 
