@@ -1,0 +1,213 @@
+ssh -J ubuntu@100.27.46.161 ubuntu@172.20.1.248
+ssh -J ubuntu@100.27.46.161 ubuntu@172.20.2.175
+ssh -J ubuntu@100.27.46.161 ubuntu@172.20.3.71
+
+
+# install docker on ubuntu
+sudo apt-get update -y
+sudo apt-get install docker.io -y
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -a -G docker $USER
+newgrp docker
+
+# set up the dns names on node 1
+sudo bash -c 'echo "172.20.2.175 rabbitmq-node2" >> /etc/hosts'
+sudo bash -c 'echo "172.20.3.71 rabbitmq-node3" >> /etc/hosts'
+
+# check the etc/hosts
+ubuntu@ip-172-20-1-248:~$ cat /etc/hosts
+127.0.0.1 localhost
+
+# The following lines are desirable for IPv6 capable hosts
+::1 ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+ff02::3 ip6-allhosts
+172.20.2.175 rabbitmq-node2
+172.20.3.71 rabbitmq-node3
+
+
+# set up the dns names on node 2 
+sudo bash -c 'echo "172.20.1.248 rabbitmq-node1" >> /etc/hosts'
+sudo bash -c 'echo "172.20.3.71 rabbitmq-node3" >> /etc/hosts'
+
+# set up the dns names on node 3
+sudo bash -c 'echo "172.20.1.248 rabbitmq-node1" >> /etc/hosts'
+sudo bash -c 'echo "172.20.2.175 rabbitmq-node2" >> /etc/hosts'
+
+
+
+# docker install rabbitmq
+# docker run rabbitmq
+docker run -d \
+  --name rabbitmq \
+  --hostname rabbitmq-node1 \
+  --restart unless-stopped \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -e RABBITMQ_DEFAULT_USER=admin \
+  -e RABBITMQ_DEFAULT_PASS=Avnet@916505 \
+  -v rabbitmq_data:/var/lib/rabbitmq \
+  rabbitmq:3-management
+
+
+
+# run on node 1 to get the erlang cookie 
+ubuntu@ip-172-20-1-248:~$ docker exec -it rabbitmq cat /var/lib/rabbitmq/.erlang.cookie
+SPGFJGWSJFCVLDCSHDHUubuntu
+
+# node 1
+docker stop rabbitmq && docker rm rabbitmq
+docker volume rm rabbitmq_data
+
+docker run -d \
+  --name rabbitmq \
+  --hostname rabbitmq-node1 \
+  --restart unless-stopped \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -p 4369:4369 \
+  -p 25672:25672 \
+  -e RABBITMQ_DEFAULT_USER=admin \
+  -e RABBITMQ_DEFAULT_PASS=Avnet@916505 \
+  -e RABBITMQ_ERLANG_COOKIE='SPGFJGWSJFCVLDCSHDHU' \
+  -v rabbitmq_data:/var/lib/rabbitmq \
+  rabbitmq:3-management
+
+# node 2
+# 停止并删除现有的名为 rabbitmq 的容器
+docker stop rabbitmq && docker rm rabbitmq
+docker volume rm rabbitmq_data
+
+# 将 node 2 加入集群
+docker run -d \
+  --name rabbitmq \
+  --hostname rabbitmq-node2 \
+  --restart unless-stopped \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -p 4369:4369 \
+  -p 25672:25672 \
+  -e RABBITMQ_DEFAULT_USER=admin \
+  -e RABBITMQ_DEFAULT_PASS=Avnet@916505 \
+  -e RABBITMQ_ERLANG_COOKIE='SPGFJGWSJFCVLDCSHDHU' \
+  --add-host rabbitmq-node1:172.20.1.248 \
+  -v rabbitmq_data:/var/lib/rabbitmq \
+  rabbitmq:3-management
+
+# node 3
+docker stop rabbitmq && docker rm rabbitmq
+docker volume rm rabbitmq_data
+
+# 将 node 3 加入集群 
+docker run -d \
+  --name rabbitmq \
+  --hostname rabbitmq-node3 \
+  --restart unless-stopped \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -p 4369:4369 \
+  -p 25672:25672 \
+  -e RABBITMQ_DEFAULT_USER=admin \
+  -e RABBITMQ_DEFAULT_PASS=Avnet@916505 \
+  -e RABBITMQ_ERLANG_COOKIE='SPGFJGWSJFCVLDCSHDHU' \
+  --add-host rabbitmq-node1:172.20.1.248 \
+  --add-host rabbitmq-node2:172.20.2.175 \
+  -v rabbitmq_data:/var/lib/rabbitmq \
+  rabbitmq:3-management
+
+
+# if you still not join node 2 and node 3 to node 1
+# run the following command on node 2 and node 3
+docker exec -it rabbitmq rabbitmqctl stop_app
+docker exec -it rabbitmq rabbitmqctl reset
+docker exec -it rabbitmq rabbitmqctl join_cluster rabbit@rabbitmq-node1
+docker exec -it rabbitmq rabbitmqctl start_app
+
+
+
+# 检查集群的状态 
+docker exec -it rabbitmq rabbitmqctl cluster_status
+
+
+# install rabbitmq on EC2 with an EBS volume
+
+# logon the EC2
+
+# check the volume status 
+lsblk
+
+NAME         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+loop0          7:0    0   74M  1 loop /snap/core22/2411
+loop1          7:1    0 28.2M  1 loop /snap/amazon-ssm-agent/13009
+loop2          7:2    0 49.3M  1 loop /snap/snapd/26865
+nvme0n1      259:0    0   30G  0 disk 
+├─nvme0n1p1  259:1    0 28.9G  0 part /
+├─nvme0n1p13 259:2    0 1023M  0 part /boot
+├─nvme0n1p14 259:3    0    4M  0 part 
+└─nvme0n1p15 259:4    0  106M  0 part /boot/efi
+nvme1n1      259:5    0  100G  0 disk 
+
+
+# format the ebs to ext4
+sudo mkfs -t ext4 /dev/nvme1n1
+
+# create the directory for rabbitmq 
+sudo mkdir -p /mnt/rabbitmq-data
+
+# attach the disk to this directory
+sudo mount /dev/nvme1n1 /mnt/rabbitmq-data
+
+# get the UUID of this volume 
+ubuntu@ip-172-20-4-198:~$ sudo blkid /dev/nvme1n1
+/dev/nvme1n1: UUID="976c3b67-7bbc-45ff-8657-fb25d9172cfc" BLOCK_SIZE="4096" TYPE="ext4"
+
+# configure auto-startup
+ubuntu@ip-172-20-4-198:~$ echo "UUID=976c3b67-7bbc-45ff-8657-fb25d9172cfc /mnt/rabbitmq-data ext4 defaults,nofail 0 2" | sudo tee -a /etc/fstab
+UUID=976c3b67-7bbc-45ff-8657-fb25d9172cfc /mnt/rabbitmq-data ext4 defaults,nofail 0 2
+
+# umount the disk do the test
+sudo umount /mnt/rabbitmq-data
+
+# mount again 
+sudo mount -a
+
+# refresh systemd 
+sudo systemctl daemon-reload
+
+# mount again
+sudo mount -a
+
+# grant rabbitmq user UID 999 the access to the volume 
+sudo chown -R 999:999 /mnt/rabbitmq-data
+
+# docker run rabbitmq 
+docker run -d \
+  --name rabbitmq-server \
+  --restart always \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -v /mnt/rabbitmq-data:/var/lib/rabbitmq \
+  -e RABBITMQ_DEFAULT_USER=admin \
+  -e RABBITMQ_DEFAULT_PASS=Avnet@916505 \
+  rabbitmq:3.13-management
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
