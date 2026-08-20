@@ -4,8 +4,7 @@ from botocore.exceptions import ClientError
 import pika
 
 def get_secret_from_aws(secret_name, region_name="us-east-1"):
-    """从 AWS Secrets Manager 获取凭据"""
-    print(f"正在从 Secrets Manager 获取密钥: {secret_name} ...")
+    print(f"We are trying to getsecret from Secrets Manager : {secret_name} ...")
     
     session = boto3.session.Session()
     client = session.client(
@@ -16,21 +15,19 @@ def get_secret_from_aws(secret_name, region_name="us-east-1"):
     try:
         response = client.get_secret_value(SecretId=secret_name)
     except ClientError as e:
-        print(f"❌ 获取 Secret 失败: {e}")
+        print(f"❌ Failed to get Secret error: {e}")
         raise e
 
-    # 解析 JSON 格式的密钥
+    # get the secret from json
     secret_string = response['SecretString']
     return json.loads(secret_string)
 
 def test_rabbitmq_connection(creds):
-    """测试连接 RabbitMQ 并发送/接收一条测试消息"""
     username = creds.get('username')
     password = creds.get('password')
-    # 如果你在本地测试，host 可以是 localhost；如果跨实例，填你的 EC2 私网/公网 IP
     host = creds.get('host', 'localhost') 
 
-    print(f"正在尝试连接 RabbitMQ (Host: {host}, User: {username}) ...")
+    print(f"We are trying to connect RabbitMQ (Host: {host}, User: {username}) ...")
 
     credentials = pika.PlainCredentials(username, password)
     parameters = pika.ConnectionParameters(
